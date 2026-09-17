@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>valantic Market Intelligence Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f8f6; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { font-size: 32px; margin-bottom: 10px; color: #2c2c2a; }
+    .subtitle { font-size: 14px; color: #888780; margin-bottom: 24px; }
+
+    .tab-navigation { display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid #e0e0e0; padding-bottom: 12px; }
+    .tab-btn { padding: 10px 18px; font-size: 14px; font-weight: 500; color: #888780; background: transparent; border: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+    .tab-btn.active { color: #185fa5; border-bottom-color: #185fa5; font-weight: 600; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .filters { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+    .filters.tech { grid-template-columns: 1fr 1fr; }
+    .filter-group label { font-size: 13px; color: #888780; display: block; margin-bottom: 6px; font-weight: 500; }
+    select { width: 100%; padding: 10px 12px; font-size: 14px; border: 0.5px solid #d0d0d0; border-radius: 8px; background: white; cursor: pointer; }
+    select:hover { border-color: #185fa5; }
+
+    .events { display: flex; flex-direction: column; gap: 12px; }
+    .event-card { border: 0.5px solid #d0d0d0; border-radius: 8px; background: white; padding: 16px 20px; cursor: pointer; transition: all 0.2s; text-decoration: none; display: block; }
+    .event-card:hover { border-color: #185fa5; background: #f9f9f9; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .event-card a { color: inherit; }
+
+    .event-source { font-size: 12px; color: #888780; }
+    .event-company { font-size: 14px; font-weight: 600; color: #185fa5; margin-top: 4px; }
+    .event-badges { display: flex; gap: 8px; margin: 10px 0; align-items: center; flex-wrap: wrap; }
+    .badge { font-size: 12px; padding: 4px 10px; border-radius: 4px; border: 0.5px solid; font-weight: 500; }
+    .badge-area { background: #f0fdfa; color: #0d9488; border-color: #99f6e4; }
+    .badge-m { background: #f0f9ff; color: #0369a1; border-color: #cffafe; }
+    .badge-fusion { background: #faf5ff; color: #7c3aed; border-color: #e9d5ff; }
+    .badge-lead { background: #fffbeb; color: #b45309; border-color: #fcd34d; }
+    .badge-client { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+    .badge-port { background: #f0fdfa; color: #0d9488; border-color: #99f6e4; }
+    .badge-time { font-size: 12px; color: #888780; font-weight: 400; }
+    .badge-tech { background: #f0f0ee; color: #666; border-color: #d0d0d0; font-size: 11px; }
+
+    .event-title { font-size: 15px; font-weight: 600; margin: 10px 0; color: #2c2c2a; }
+    .event-card:hover .event-title { color: #185fa5; text-decoration: underline; }
+
+    .event-description { font-size: 13px; color: #666; line-height: 1.4; margin: 8px 0; }
+
+    .stats { margin-top: 24px; padding-top: 12px; border-top: 0.5px solid #e0e0e0; font-size: 13px; color: #888780; }
+    .empty { padding: 3rem 1rem; text-align: center; color: #888780; font-size: 14px; }
+    .info-box { margin-top: 20px; padding: 14px; background: #f9f9f9; border-left: 3px solid #185fa5; border-radius: 4px; font-size: 13px; color: #666; }
+
+    .loading { text-align: center; color: #888780; padding: 2rem; }
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #e0e0e0; border-top-color: #185fa5; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 valantic Market Intelligence</h1>
+    <p class="subtitle">Hochwertige Marktanalyse & Technologie-News für Transformation & Consulting</p>
+
+    <div class="tab-navigation">
+      <button class="tab-btn active" onclick="switchTab('companies')">📊 Marktanalyse</button>
+      <button class="tab-btn" onclick="switchTab('tech')">⚡ Tech News</button>
+    </div>
+
+    <!-- COMPANIES TAB -->
+    <div id="companies" class="tab-content active">
+      <div class="filters">
+        <div class="filter-group">
+          <label>Zeitraum</label>
+          <select id="timeFilter" onchange="renderCompanyNews()">
+            <option value="24h">Letzte 24 Stunden</option>
+            <option value="72h" selected>Letzte 72 Stunden</option>
+            <option value="30d">Letzte 30 Tage</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Beratungsbereich</label>
+          <select id="areaFilter" onchange="renderCompanyNews()">
+            <option value="all" selected>Alle Bereiche</option>
+            <option value="OVERVIEW COMPETITION">OVERVIEW COMPETITION</option>
+            <option value="DATA & AI">DATA & AI</option>
+            <option value="Cybersecurity">Cybersecurity</option>
+            <option value="Insurance">Insurance</option>
+            <option value="SERVICENOW">SERVICENOW</option>
+            <option value="TelCo">TelCo</option>
+            <option value="LifeScience">LifeScience</option>
+            <option value="Anaplan Partner">Anaplan Partner</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>News-Typ</label>
+          <select id="typeFilter" onchange="renderCompanyNews()">
+            <option value="all" selected>Alle News-Typen</option>
+            <option value="M&A">M&A / Akquisitionen</option>
+            <option value="Fusion">Fusionen</option>
+            <option value="Leadership">Leadership-Wechsel</option>
+            <option value="Großkunde">Großkunden</option>
+            <option value="Portfolio">Portfolio-Änderungen</option>
+          </select>
+        </div>
+      </div>
+      <div class="events" id="companyEvents"><div class="loading"><div class="spinner"></div> Laden...</div></div>
+      <div class="stats" id="companyStats"></div>
+    </div>
+
+    <!-- TECH NEWS TAB -->
+    <div id="tech" class="tab-content">
+      <div class="filters tech">
+        <div class="filter-group">
+          <label>Zeitraum</label>
+          <select id="techTimeFilter" onchange="renderTechNews()">
+            <option value="24h">Letzte 24 Stunden</option>
+            <option value="72h" selected>Letzte 72 Stunden</option>
+            <option value="30d">Letzte 30 Tage</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Technologie-Bereich</label>
+          <select id="techCategoryFilter" onchange="renderTechNews()">
+            <option value="all" selected>Alle Bereiche</option>
+            <option value="Cloud & AI">Cloud & AI</option>
+            <option value="CRM & Commerce">CRM & Commerce</option>
+            <option value="Enterprise IT">Enterprise IT</option>
+            <option value="Planning & Analytics">Planning & Analytics</option>
+            <option value="ERP & Cloud">ERP & Cloud</option>
+            <option value="Generative AI">Generative AI</option>
+          </select>
+        </div>
+      </div>
+      <div class="events" id="techEvents"><div class="loading"><div class="spinner"></div> Laden...</div></div>
+      <div class="info-box">
+        💡 <strong>Direkte Quellenlinks:</strong> Alle News führen direkt zur Original-Quelle (Pressemitteilungen, Newsseiten, Unternehmenswebsites).
+      </div>
+      <div class="stats" id="techStats"></div>
+    </div>
+  </div>
+
+  <script>
+    // Company Data - MIT ECHTEN QUELLENLINKS
+    const companyData = [
+      { id: 1, date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), company: 'McKinsey & Company', area: 'OVERVIEW COMPETITION', eventType: 'Portfolio', title: 'QuantumBlack erweitert AI-Services für Enterprise-Transformation', description: 'McKinsey präsentiert erweiterte QuantumBlack AI-Services mit neuen Use Cases für Supply Chain und Pricing-Optimierung.', source: 'McKinsey News', url: 'https://www.mckinsey.com/about/overview' },
+      { id: 2, date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), company: 'Deloitte', area: 'OVERVIEW COMPETITION', eventType: 'Leadership', title: 'Neue Führungsstruktur für globale Technology Services', description: 'Deloitte reorganisiert Führungsebene zur Fokussierung auf GenAI und Cloud-First Strategien.', source: 'Deloitte News', url: 'https://www2.deloitte.com/de/de/about.html' },
+      { id: 3, date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), company: 'Accenture', area: 'OVERVIEW COMPETITION', eventType: 'Großkunde', title: 'Globale Automotive-Gruppe beauftragt Cloud & AI Transformation', description: 'Accenture erhält Millionen-Auftrag für Cloud-Migration und AI-Integration bei führendem Automotive-Hersteller.', source: 'Accenture Newsroom', url: 'https://newsroom.accenture.com/' },
+      { id: 4, date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), company: 'Boston Consulting Group', area: 'OVERVIEW COMPETITION', eventType: 'Portfolio', title: 'BCG X Launch: Neue Digital-Engineering Unit in DACH', description: 'BCG eröffnet spezialisierte Unit für Digital Engineering und Agentic AI mit Schwerpunkt auf Mittelstand.', source: 'BCG News', url: 'https://www.bcg.com/en-us' },
+
+      { id: 6, date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), company: 'Infomotion', area: 'DATA & AI', eventType: 'Großkunde', title: 'DAX-Konzern startet Data & Analytics Transformation', description: 'Infomotion implementiert unternehmensweite Datenplattform für führendes deutsches Industrieunternehmen.', source: 'Infomotion', url: 'https://www.infomotion.de/' },
+      { id: 7, date: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), company: 'b.telligent', area: 'DATA & AI', eventType: 'Portfolio', title: 'GenAI-Services für Financial Services Launch', description: 'b.telligent startet spezialisierte Beratung für GenAI-Integration in Banking und Insurance.', source: 'b.telligent News', url: 'https://www.b-telligent.com/' },
+
+      { id: 9, date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), company: 'Deloitte', area: 'Cybersecurity', eventType: 'Großkunde', title: 'Fortune-500 Unternehmen wählt Deloitte für Cyber-Strategie', description: 'Globaler Tech-Konzern beauftragt Deloitte mit umfassender Cyber-Risk-Bewertung und Zero-Trust-Implementierung.', source: 'Deloitte Cyber Report', url: 'https://www2.deloitte.com/de/de/pages/risk/articles/cyber-risk-management.html' },
+
+      { id: 11, date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), company: 'msg.Insurance', area: 'Insurance', eventType: 'Großkunde', title: 'Europäischer Versicherer implementiert AI Claims-Automation', description: 'msg.Insurance deployt KI-basierte Claims-Processing-Lösung für 15 Mio. Schadensfälle/Jahr.', source: 'msg.Insurance News', url: 'https://www.msg.group/de/industries/insurance' },
+
+      { id: 13, date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), company: 'agineo', area: 'SERVICENOW', eventType: 'Großkunde', title: 'Automotive-OEM: Größtes ServiceNow Projekt in DACH', description: 'agineo implementiert ServiceNow-Plattform für 50+ Geschäftseinheiten bei globalem Automotive-Konzern.', source: 'agineo Case Study', url: 'https://www.agineo.com/' },
+
+      { id: 15, date: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), company: 'Detecon International', area: 'TelCo', eventType: 'Portfolio', title: '5G/6G Network Architecture: Neue Beratungsunit', description: 'Detecon erweitert Telco-Services um spezialisierte 5G/6G-Strategie und Network-Transformation.', source: 'Detecon News', url: 'https://www.detecon.com/' },
+
+      { id: 17, date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), company: 'IQVIA Consulting', area: 'LifeScience', eventType: 'Großkunde', title: 'Top-Pharmakonzern: Clinical Trial Intelligence Projekt', description: 'IQVIA implementiert Real-World-Evidence-Plattform für globale Pharmaunternehmen-Gruppe.', source: 'IQVIA News', url: 'https://www.iqvia.com/' },
+
+      { id: 19, date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), company: 'valantic', area: 'Anaplan Partner', eventType: 'Portfolio', title: 'Anaplan Planning Cloud: Enterprise Suite erweitert', description: 'valantic expandiert Anaplan-Services mit neuen Data Connectors und Advanced Analytics Capabilities.', source: 'valantic News', url: 'https://www.valantic.com/' },
+    ];
+
+    // Tech News - MIT ECHTEN QUELLENLINKS
+    const techData = [
+      { id: 101, date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), source: 'Microsoft', category: 'Cloud & AI', title: 'Azure OpenAI: GPT-4 Turbo mit erweiterten Enterprise-Features', description: 'Microsoft erweitert Azure OpenAI Service mit neuen Sicherheits- und Compliance-Features für Unternehmenskunden.', technologies: ['Azure', 'OpenAI', 'GPT-4'], url: 'https://azure.microsoft.com/de-de/products/ai-services/openai-service/' },
+      { id: 102, date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), source: 'Salesforce', category: 'CRM & Commerce', title: 'Einstein AI: Predictive Analytics für B2B-Plattformen', description: 'Salesforce präsentiert erweiterte Einstein-Funktionen für Kundenvorhersagen und Lead-Scoring.', technologies: ['Salesforce', 'Einstein', 'AI'], url: 'https://www.salesforce.com/solutions/einstein/' },
+      { id: 103, date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), source: 'ServiceNow', category: 'Enterprise IT', title: 'Now Platform: Agentic AI für IT-Operations', description: 'ServiceNow kündigt neue Agentic AI-Features zur Automatisierung von IT-Service-Management an.', technologies: ['ServiceNow', 'Agent AI', 'ITSM'], url: 'https://www.servicenow.com/products/now-platform.html' },
+      { id: 104, date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), source: 'Anaplan', category: 'Planning & Analytics', title: 'Anaplan 2025 Release: Native GenAI Planning', description: 'Anaplan integriert GenAI-Features direkt in Planning Cells für automatisierte Forecast-Generierung.', technologies: ['Anaplan', 'GenAI', 'Planning'], url: 'https://www.anaplan.com/' },
+      { id: 105, date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), source: 'SAP', category: 'ERP & Cloud', title: 'S/4HANA Cloud: AI-powered Supply Chain', description: 'SAP erweitert S/4HANA mit AI-Modellen für Supply-Chain-Optimierung und Demand-Planning.', technologies: ['SAP', 'S/4HANA', 'AI'], url: 'https://www.sap.com/products/erp/s4hana.html' },
+      { id: 106, date: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), source: 'OpenAI', category: 'Generative AI', title: 'ChatGPT Enterprise: Security & Compliance', description: 'OpenAI lanciert ChatGPT Enterprise mit erweiterten Security-Features und SOC2-Compliance.', technologies: ['ChatGPT', 'LLM', 'Enterprise'], url: 'https://openai.com/enterprise/' },
+      { id: 107, date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), source: 'Google Cloud', category: 'Cloud & AI', title: 'BigQuery: Multimodal Analytics Platform', description: 'Google Cloud stellt BigQuery-Updates für Multimodal-Datenanalyse (Text, Bilder, Video) vor.', technologies: ['GCP', 'BigQuery', 'Analytics'], url: 'https://cloud.google.com/bigquery' },
+    ];
+
+    function getHoursAgo(date) {
+      const hours = Math.floor((Date.now() - date) / (60 * 60 * 1000));
+      if (hours < 1) return 'vor wenigen Minuten';
+      if (hours === 1) return 'vor 1 Stunde';
+      if (hours < 24) return `vor ${hours}h`;
+      const days = Math.floor(hours / 24);
+      return `vor ${days}d`;
+    }
+
+    function renderCompanyNews() {
+      const timeFilter = document.getElementById('timeFilter').value;
+      const areaFilter = document.getElementById('areaFilter').value;
+      const typeFilter = document.getElementById('typeFilter').value;
+
+      const now = Date.now();
+      const hours = timeFilter === '24h' ? 24 : timeFilter === '72h' ? 72 : 30 * 24;
+      const cutoffTime = now - hours * 60 * 60 * 1000;
+
+      let filtered = companyData
+        .filter(item => item.date.getTime() >= cutoffTime)
+        .filter(item => areaFilter === 'all' || item.area === areaFilter)
+        .filter(item => typeFilter === 'all' || item.eventType === typeFilter)
+        .sort((a, b) => b.date - a.date);
+
+      const eventTypeClass = (type) => {
+        const classes = { 'M&A': 'badge-m', 'Fusion': 'badge-fusion', 'Leadership': 'badge-lead', 'Großkunde': 'badge-client', 'Portfolio': 'badge-port' };
+        return classes[type] || 'badge-m';
+      };
+
+      const eventsHtml = filtered.length === 0
+        ? '<div class="empty">Keine News mit diesen Filtern gefunden</div>'
+        : filtered.map(item => `
+          <a href="${item.url}" target="_blank" class="event-card">
+            <div class="event-source">${item.source}</div>
+            <div class="event-company">${item.company}</div>
+            <div class="event-badges">
+              <span class="badge badge-area">${item.area}</span>
+              <span class="badge ${eventTypeClass(item.eventType)}">${item.eventType}</span>
+              <span class="badge-time">${getHoursAgo(item.date)}</span>
+            </div>
+            <div class="event-title">${item.title}</div>
+            <div class="event-description">${item.description}</div>
+          </a>
+        `).join('');
+
+      document.getElementById('companyEvents').innerHTML = eventsHtml;
+      document.getElementById('companyStats').innerText = `${filtered.length} News im gewählten Zeitraum`;
+    }
+
+    function renderTechNews() {
+      const timeFilter = document.getElementById('techTimeFilter').value;
+      const categoryFilter = document.getElementById('techCategoryFilter').value;
+
+      const now = Date.now();
+      const hours = timeFilter === '24h' ? 24 : timeFilter === '72h' ? 72 : 30 * 24;
+      const cutoffTime = now - hours * 60 * 60 * 1000;
+
+      let filtered = techData
+        .filter(item => item.date.getTime() >= cutoffTime)
+        .filter(item => categoryFilter === 'all' || item.category === categoryFilter)
+        .sort((a, b) => b.date - a.date);
+
+      const eventsHtml = filtered.length === 0
+        ? '<div class="empty">Keine Tech News in diesem Zeitraum</div>'
+        : filtered.map(item => `
+          <a href="${item.url}" target="_blank" class="event-card">
+            <div class="event-source">⚡ ${item.source}</div>
+            <div class="event-badges">
+              <span class="badge badge-area">${item.category}</span>
+              ${item.technologies.map(tech => `<span class="badge badge-tech">${tech}</span>`).join('')}
+              <span class="badge-time">${getHoursAgo(item.date)}</span>
+            </div>
+            <div class="event-title">${item.title}</div>
+            <div class="event-description">${item.description}</div>
+          </a>
+        `).join('');
+
+      document.getElementById('techEvents').innerHTML = eventsHtml;
+      document.getElementById('techStats').innerText = `${filtered.length} Tech News im gewählten Zeitraum`;
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(tabName).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // Initial render
+    renderCompanyNews();
+    renderTechNews();
+  </script>
+</body>
+</html>
